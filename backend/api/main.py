@@ -30,13 +30,14 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def preload_corp_list():
-        from backend.data.dart_client import DartClient
         import asyncio
-        try:
-            dart = DartClient()
-            await dart._load_corp_list()
-        except Exception:
-            pass
+        from backend.data.dart_client import DartClient
+        async def _load():
+            try:
+                await DartClient()._load_corp_list()
+            except Exception:
+                pass
+        asyncio.create_task(_load())
 
     return app
 
