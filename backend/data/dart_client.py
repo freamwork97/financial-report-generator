@@ -47,7 +47,7 @@ class DartClient:
 
         zf = zipfile.ZipFile(io.BytesIO(resp.content))
         xml_data = zf.read("CORPCODE.xml")
-        root = ET.fromstring(xml_data)
+        root = ET.fromstring(xml_data.decode("utf-8"))
 
         items = []
         for item in root.findall("list"):
