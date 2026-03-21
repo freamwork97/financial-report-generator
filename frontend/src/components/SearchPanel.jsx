@@ -9,15 +9,22 @@ export default function SearchPanel({ onSelect }) {
   const [year, setYear] = useState(CURRENT_YEAR - 1)
   const [stockCode, setStockCode] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSearch = async () => {
     if (!query.trim()) return
     setLoading(true)
+    setError('')
     try {
       const res = await searchCompany(query)
-      setResults(res.data.results || [])
+      const results = res.data.results || []
+      setResults(results)
+      if (results.length === 0) {
+        setError('검색 결과가 없습니다. 회사명을 다시 확인해주세요.')
+      }
     } catch {
       setResults([])
+      setError('검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
     } finally {
       setLoading(false)
     }
@@ -69,6 +76,10 @@ export default function SearchPanel({ onSelect }) {
           {loading ? '검색 중...' : '검색'}
         </button>
       </div>
+
+      {error && (
+        <p className="mt-3 text-sm text-red-500">{error}</p>
+      )}
 
       {results.length > 0 && (
         <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
