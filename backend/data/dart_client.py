@@ -34,7 +34,7 @@ class DartClient:
     async def _load_corp_list(self) -> list[dict]:
         """DART 전체 법인 목록 다운로드 및 파싱 (캐시 168h)"""
         cache = await get_cache()
-        cached = await cache.get("corp_list_all", {})
+        cached = await cache.get("corp_list_all_v2", {})
         if cached:
             return cached.get("items", [])
 
@@ -59,7 +59,7 @@ class DartClient:
                 "modify_date": item.findtext("modify_date", "").strip(),
             })
 
-        await cache.set("corp_list_all", {}, {"items": items}, ttl_hours=168)
+        await cache.set("corp_list_all_v2", {}, {"items": items}, ttl_hours=168)
         return items
 
     async def search_company(self, company_name: str) -> list[dict]:
