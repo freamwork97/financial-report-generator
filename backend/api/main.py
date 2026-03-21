@@ -24,6 +24,10 @@ def create_app() -> FastAPI:
     app.include_router(router)
     app.include_router(pdf_router)
 
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
+
     return app
 
 
