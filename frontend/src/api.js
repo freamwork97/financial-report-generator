@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: '/api' })
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
 
 export const searchCompany = (q) => api.get(`/search?q=${encodeURIComponent(q)}`)
 
@@ -19,7 +19,7 @@ export const downloadPdf = async (data) => {
 }
 
 export const streamAnalysis = (data, onChunk, onDone, onError) => {
-  fetch('/api/analyze/stream', {
+  fetch(`${import.meta.env.VITE_API_URL || '/api'}/analyze/stream`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
