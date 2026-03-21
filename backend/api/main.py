@@ -5,6 +5,9 @@ from backend.api.routes import router
 from backend.api.pdf_routes import pdf_router
 
 
+_ready = False
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
@@ -26,18 +29,20 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     def health():
+        from fastapi import HTTPException
+        if not _ready:
+            raise HTTPException(status_code=503, detail="initializing")
         return {"status": "ok"}
 
     @app.on_event("startup")
     async def preload_corp_list():
-        import asyncio
+        global _ready
         from backend.data.dart_client import DartClient
-        async def _load():
-            try:
-                await DartClient()._load_corp_list()
-            except Exception:
-                pass
-        asyncio.create_task(_load())
+        try:
+            await DartClient()._load_corp_list()
+        except Exception:
+            pass
+        _ready = True
 
     return app
 

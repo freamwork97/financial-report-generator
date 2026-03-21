@@ -38,7 +38,7 @@ class DartClient:
         if cached:
             return cached.get("items", [])
 
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with httpx.AsyncClient(timeout=120) as client:
             resp = await client.get(
                 f"{self.base_url}/corpCode.xml",
                 params={"crtfc_key": self.api_key},
