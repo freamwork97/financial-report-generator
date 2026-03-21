@@ -28,6 +28,16 @@ def create_app() -> FastAPI:
     def health():
         return {"status": "ok"}
 
+    @app.on_event("startup")
+    async def preload_corp_list():
+        from backend.data.dart_client import DartClient
+        import asyncio
+        try:
+            dart = DartClient()
+            await dart._load_corp_list()
+        except Exception:
+            pass
+
     return app
 
 
