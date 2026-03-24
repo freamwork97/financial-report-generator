@@ -1,10 +1,18 @@
 import { useState } from 'react'
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import NavBar from './components/NavBar'
 import SearchPage from './pages/SearchPage'
 import ResultsPage from './pages/ResultsPage'
+import MetricsGuideIndexPage from './pages/metrics-guide/MetricsGuideIndexPage'
+import MetricDetailPage from './pages/metrics-guide/MetricDetailPage'
+import SectorGuideIndexPage from './pages/sector-guide/SectorGuideIndexPage'
+import SectorDetailPage from './pages/sector-guide/SectorDetailPage'
+import CompanyCasesIndexPage from './pages/company-cases/CompanyCasesIndexPage'
+import CompanyCaseDetailPage from './pages/company-cases/CompanyCaseDetailPage'
 import { getMetrics, streamAnalysis, downloadPdf } from './api'
 
-export default function App() {
-  const [page, setPage] = useState('search') // 'search' | 'results'
+function AppRoutes() {
+  const navigate = useNavigate()
   const [selected, setSelected] = useState(null)
   const [metricsData, setMetricsData] = useState(null)
   const [analysis, setAnalysis] = useState('')
@@ -23,7 +31,7 @@ export default function App() {
     try {
       const res = await getMetrics(company)
       setMetricsData(res.data)
-      setPage('results')
+      navigate('/results')
     } catch (err) {
       setError('재무 데이터 조회 실패: ' + (err.response?.data?.detail || err.message))
     } finally {
@@ -32,7 +40,7 @@ export default function App() {
   }
 
   const handleBack = () => {
-    setPage('search')
+    navigate('/')
     setSelected(null)
     setMetricsData(null)
     setAnalysis('')
@@ -63,27 +71,51 @@ export default function App() {
     }
   }
 
-  if (page === 'results' && metricsData) {
-    return (
-      <ResultsPage
-        selected={selected}
-        metricsData={metricsData}
-        analysis={analysis}
-        isLoadingAnalysis={isLoadingAnalysis}
-        isLoadingPdf={isLoadingPdf}
-        error={error}
-        onBack={handleBack}
-        onAnalyze={handleAnalyze}
-        onDownloadPdf={handleDownloadPdf}
-      />
-    )
-  }
-
   return (
-    <SearchPage
-      onSelect={handleSelect}
-      isLoading={isLoadingMetrics}
-      error={error}
-    />
+    <div className="min-h-screen bg-gray-50">
+      <NavBar />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <SearchPage
+              onSelect={handleSelect}
+              isLoading={isLoadingMetrics}
+              error={error}
+            />
+          }
+        />
+        <Route
+          path="/results"
+          element={
+            <ResultsPage
+              selected={selected}
+              metricsData={metricsData}
+              analysis={analysis}
+              isLoadingAnalysis={isLoadingAnalysis}
+              isLoadingPdf={isLoadingPdf}
+              error={error}
+              onBack={handleBack}
+              onAnalyze={handleAnalyze}
+              onDownloadPdf={handleDownloadPdf}
+            />
+          }
+        />
+        <Route path="/metrics-guide" element={<MetricsGuideIndexPage />} />
+        <Route path="/metrics-guide/:metricId" element={<MetricDetailPage />} />
+        <Route path="/sector-guide" element={<SectorGuideIndexPage />} />
+        <Route path="/sector-guide/:sectorId" element={<SectorDetailPage />} />
+        <Route path="/company-cases" element={<CompanyCasesIndexPage />} />
+        <Route path="/company-cases/:companyId" element={<CompanyCaseDetailPage />} />
+      </Routes>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   )
 }

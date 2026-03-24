@@ -25,9 +25,17 @@ export default function ResultsPage({
     }
   }, [])
 
+  if (!metricsData) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-12 text-center text-gray-500">
+        <p>데이터가 없습니다. <button onClick={onBack} className="text-primary underline">검색 페이지로 돌아가기</button></p>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-primary text-white py-4 px-6 shadow-lg">
+    <div className="bg-gray-50">
+      <div style={{ backgroundColor: '#0f3460' }} className="text-white py-4 px-6 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -60,7 +68,7 @@ export default function ResultsPage({
             )}
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
         {error && (

@@ -28,3 +28,7 @@ financial-report-generator/
 ## 공유 태스크 리스트
 에이전트는 태스크를 시작할 때 status를 in_progress로,
 완료 시 completed로 업데이트한다.
+
+| id | task | status | owner |
+|----|------|--------|-------|
+| 2 | 재무지표 사전 페이지 구축 | completed | metrics-agent |
