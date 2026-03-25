@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import SearchPage from './pages/SearchPage'
 import ResultsPage from './pages/ResultsPage'
@@ -10,6 +10,22 @@ import SectorDetailPage from './pages/sector-guide/SectorDetailPage'
 import CompanyCasesIndexPage from './pages/company-cases/CompanyCasesIndexPage'
 import CompanyCaseDetailPage from './pages/company-cases/CompanyCaseDetailPage'
 import { getMetrics, streamAnalysis, downloadPdf } from './api'
+
+function AdSenseLoader() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    if (pathname === '/') return
+    const script = document.createElement('script')
+    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5381965531835429'
+    script.async = true
+    script.crossOrigin = 'anonymous'
+    document.head.appendChild(script)
+    return () => {
+      document.head.removeChild(script)
+    }
+  }, [pathname])
+  return null
+}
 
 function AppRoutes() {
   const navigate = useNavigate()
@@ -73,6 +89,7 @@ function AppRoutes() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <AdSenseLoader />
       <NavBar />
       <Routes>
         <Route

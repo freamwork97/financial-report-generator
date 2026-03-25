@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import MetricsDashboard from '../components/MetricsDashboard'
 import AnalysisPanel from '../components/AnalysisPanel'
 import PriceChart from '../components/PriceChart'
@@ -14,16 +13,6 @@ export default function ResultsPage({
   onAnalyze,
   onDownloadPdf,
 }) {
-  useEffect(() => {
-    const script = document.createElement('script')
-    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5381965531835429'
-    script.async = true
-    script.crossOrigin = 'anonymous'
-    document.head.appendChild(script)
-    return () => {
-      document.head.removeChild(script)
-    }
-  }, [])
 
   if (!metricsData) {
     return (
