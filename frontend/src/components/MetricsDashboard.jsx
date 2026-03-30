@@ -15,11 +15,13 @@ function MetricTooltip({ guideId }) {
   if (!guide) return null
 
   return (
-    <span className="relative inline-flex items-center ml-1">
+    <span
+      className="relative inline-flex items-center ml-1"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
       <button
         className="text-gray-300 hover:text-blue-400 transition-colors leading-none"
-        onMouseEnter={() => setShow(true)}
-        onMouseLeave={() => setShow(false)}
         aria-label={`${guide.name} 설명 보기`}
       >
         <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
@@ -28,22 +30,26 @@ function MetricTooltip({ guideId }) {
         </svg>
       </button>
       {show && (
-        <div
-          className="absolute z-50 w-64 bg-white border border-gray-200 rounded-xl shadow-xl p-3 text-left"
-          style={{ bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)' }}
-        >
-          <div className="text-xs font-semibold text-gray-800 mb-1">{guide.name}</div>
-          <p className="text-xs text-gray-600 leading-relaxed mb-2">{guide.summary}</p>
-          <Link
-            to={`/metrics-guide/${guide.id}`}
-            className="text-xs font-medium text-blue-600 hover:underline"
+        <>
+          {/* 버튼과 툴팁 사이 갭을 채우는 투명 브릿지 */}
+          <div className="absolute" style={{ bottom: '100%', left: '-30px', right: '-30px', height: '8px' }} />
+          <div
+            className="absolute z-50 w-64 bg-white border border-gray-200 rounded-xl shadow-xl p-3 text-left"
+            style={{ bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)' }}
           >
-            자세히 보기 →
-          </Link>
-          {/* 말풍선 꼬리 */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0"
-            style={{ borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '6px solid #e5e7eb' }} />
-        </div>
+            <div className="text-xs font-semibold text-gray-800 mb-1">{guide.name}</div>
+            <p className="text-xs text-gray-600 leading-relaxed mb-2">{guide.summary}</p>
+            <Link
+              to={`/metrics-guide/${guide.id}`}
+              className="text-xs font-medium text-blue-600 hover:underline"
+            >
+              자세히 보기 →
+            </Link>
+            {/* 말풍선 꼬리 */}
+            <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0"
+              style={{ borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '6px solid #e5e7eb' }} />
+          </div>
+        </>
       )}
     </span>
   )
