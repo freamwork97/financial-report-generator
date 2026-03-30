@@ -25,14 +25,14 @@ async def search_company(q: str = Query(..., description="회사명")):
 async def get_metrics(req: ReportRequest):
     """재무 지표 계산 (Python만 계산)"""
     # 당기
-    current_data = await dart.get_financial_statements(req.corp_code, req.year)
+    current_data = await dart.get_financial_statements(req.corp_code, req.year, req.report_code)
     if current_data.get("status") != "000":
         raise HTTPException(404, f"재무제표 조회 실패: {current_data.get('message', '')}")
     current = parse_dart_financials(current_data)
 
-    # 전기
+    # 전기 (동일 분기 전년도)
     try:
-        prev_data = await dart.get_financial_statements(req.corp_code, req.year - 1)
+        prev_data = await dart.get_financial_statements(req.corp_code, req.year - 1, req.report_code)
         previous = parse_dart_financials(prev_data) if prev_data.get("status") == "000" else None
     except Exception:
         previous = None
@@ -63,13 +63,13 @@ async def get_metrics(req: ReportRequest):
 async def analyze_stream(req: ReportRequest):
     """LLM 스트리밍 분석 (SSE)"""
     # 재무 지표 계산
-    current_data = await dart.get_financial_statements(req.corp_code, req.year)
+    current_data = await dart.get_financial_statements(req.corp_code, req.year, req.report_code)
     if current_data.get("status") != "000":
         raise HTTPException(404, "재무제표 조회 실패")
     current = parse_dart_financials(current_data)
 
     try:
-        prev_data = await dart.get_financial_statements(req.corp_code, req.year - 1)
+        prev_data = await dart.get_financial_statements(req.corp_code, req.year - 1, req.report_code)
         previous = parse_dart_financials(prev_data) if prev_data.get("status") == "000" else None
     except Exception:
         previous = None
@@ -82,7 +82,7 @@ async def analyze_stream(req: ReportRequest):
         market_data = {}
 
     async def generate():
-        async for chunk in stream_analysis(req.company_name, req.year, metrics, market_data):
+        async for chunk in stream_analysis(req.company_name, req.year, metrics, market_data, req.report_code):
             yield f"data: {json.dumps({'text': chunk}, ensure_ascii=False)}\n\n"
         yield "data: [DONE]\n\n"
 

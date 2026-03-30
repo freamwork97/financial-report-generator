@@ -2,13 +2,23 @@ from dataclasses import asdict
 from backend.metrics.calculator import FinancialMetrics
 
 
+REPORT_PERIOD_LABELS = {
+    "11011": f"연간 (사업보고서)",
+    "11012": "반기",
+    "11013": "1분기",
+    "11014": "3분기",
+}
+
+
 def build_analysis_prompt(
     company_name: str,
     year: int,
     metrics: FinancialMetrics,
     market_data: dict,
+    report_code: str = "11011",
 ) -> str:
     m = {k: v for k, v in asdict(metrics).items() if v is not None}
+    period_label = REPORT_PERIOD_LABELS.get(report_code, report_code)
 
     def fmt(key: str, unit: str = "") -> str:
         val = m.get(key)
@@ -16,7 +26,7 @@ def build_analysis_prompt(
             return "N/A"
         return f"{val:,.2f}{unit}"
 
-    prompt = f"""당신은 전문 기업 재무 분석가입니다. 아래 재무 데이터를 바탕으로 {company_name}의 {year}년 재무제표를 분석하세요.
+    prompt = f"""당신은 전문 기업 재무 분석가입니다. 아래 재무 데이터를 바탕으로 {company_name}의 {year}년 {period_label} 재무제표를 분석하세요.
 
 ## 중요 규칙
 - 아래 제공된 숫자만 사용하세요. 절대 직접 계산하지 마세요.
@@ -24,7 +34,7 @@ def build_analysis_prompt(
 - 한국어로 작성하세요.
 - 구체적인 수치를 인용하며 분석하세요.
 
-## 재무 데이터 ({year}년 기준)
+## 재무 데이터 ({year}년 {period_label} 기준)
 
 ### 규모 (단위: 억원)
 - 매출액: {fmt('revenue', '억원')}

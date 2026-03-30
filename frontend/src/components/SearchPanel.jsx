@@ -7,6 +7,7 @@ export default function SearchPanel({ onSelect }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [year, setYear] = useState(CURRENT_YEAR - 1)
+  const [reportCode, setReportCode] = useState('11011')
   const [stockCode, setStockCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -37,6 +38,7 @@ export default function SearchPanel({ onSelect }) {
       stock_code: sc,
       company_name: company.corp_name,
       year,
+      report_code: reportCode,
     })
     setResults([])
     setQuery(company.corp_name)
@@ -67,6 +69,16 @@ export default function SearchPanel({ onSelect }) {
           {[CURRENT_YEAR - 1, CURRENT_YEAR - 2, CURRENT_YEAR - 3, CURRENT_YEAR - 4].map(y => (
             <option key={y} value={y}>{y}년</option>
           ))}
+        </select>
+        <select
+          value={reportCode}
+          onChange={(e) => setReportCode(e.target.value)}
+          className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="11011">연간 (사업보고서)</option>
+          <option value="11013">1분기</option>
+          <option value="11012">반기 (2분기)</option>
+          <option value="11014">3분기</option>
         </select>
         <button
           onClick={handleSearch}

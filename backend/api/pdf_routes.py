@@ -21,13 +21,13 @@ yf_client = YFinanceClient()
 @pdf_router.post("/report/pdf")
 async def generate_report_pdf(req: ReportRequest):
     """PDF 리포트 생성"""
-    current_data = await dart.get_financial_statements(req.corp_code, req.year)
+    current_data = await dart.get_financial_statements(req.corp_code, req.year, req.report_code)
     if current_data.get("status") != "000":
         raise HTTPException(404, "재무제표 조회 실패")
 
     current = parse_dart_financials(current_data)
     try:
-        prev_data = await dart.get_financial_statements(req.corp_code, req.year - 1)
+        prev_data = await dart.get_financial_statements(req.corp_code, req.year - 1, req.report_code)
         previous = parse_dart_financials(prev_data) if prev_data.get("status") == "000" else None
     except Exception:
         previous = None
@@ -44,7 +44,7 @@ async def generate_report_pdf(req: ReportRequest):
 
     # LLM 분석 전체 텍스트 수집
     analysis_parts = []
-    async for chunk in stream_analysis(req.company_name, req.year, metrics, market_data):
+    async for chunk in stream_analysis(req.company_name, req.year, metrics, market_data, req.report_code):
         analysis_parts.append(chunk)
     analysis_text = "".join(analysis_parts)
 
@@ -53,7 +53,9 @@ async def generate_report_pdf(req: ReportRequest):
 
     generate_pdf(req.company_name, req.year, metrics, analysis_text, price_history, output_path)
 
-    filename = f"{req.company_name}_{req.year}_재무분석리포트.pdf"
+    from backend.api.schemas import REPORT_CODE_LABELS
+    period_label = REPORT_CODE_LABELS.get(req.report_code, req.report_code)
+    filename = f"{req.company_name}_{req.year}_{period_label}_재무분석리포트.pdf"
     encoded_filename = quote(filename)
     return FileResponse(
         output_path,

@@ -10,10 +10,11 @@ async def stream_analysis(
     year: int,
     metrics: FinancialMetrics,
     market_data: dict,
+    report_code: str = "11011",
 ) -> AsyncIterator[str]:
     """Claude API로 재무 분석 스트리밍"""
     client = anthropic.AsyncAnthropic(api_key=get_settings().anthropic_api_key)
-    prompt = build_analysis_prompt(company_name, year, metrics, market_data)
+    prompt = build_analysis_prompt(company_name, year, metrics, market_data, report_code)
 
     async with client.messages.stream(
         model="claude-sonnet-4-6",

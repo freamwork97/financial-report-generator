@@ -6,11 +6,20 @@ class CompanySearchRequest(BaseModel):
     query: str  # 회사명 또는 종목코드
 
 
+REPORT_CODE_LABELS = {
+    "11011": "사업보고서",
+    "11012": "반기보고서",
+    "11013": "1분기보고서",
+    "11014": "3분기보고서",
+}
+
+
 class ReportRequest(BaseModel):
     corp_code: str
     stock_code: str  # yfinance 용 (예: "005930.KS")
     year: int
     company_name: str
+    report_code: str = "11011"  # 11011=사업보고서, 11012=반기, 11013=1분기, 11014=3분기
 
 
 class CompanyInfo(BaseModel):
