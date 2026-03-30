@@ -1,18 +1,84 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts'
+import { metricsData } from '../data/metricsGuideData'
 
-function MetricCard({ label, value, unit = '', color = 'text-primary' }) {
+// id → { summary } 룩업 맵
+const guideMap = Object.fromEntries(metricsData.map(m => [m.id, m]))
+
+function MetricTooltip({ guideId }) {
+  const [show, setShow] = useState(false)
+  const guide = guideMap[guideId]
+  if (!guide) return null
+
+  return (
+    <span className="relative inline-flex items-center ml-1">
+      <button
+        className="text-gray-300 hover:text-blue-400 transition-colors leading-none"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        aria-label={`${guide.name} 설명 보기`}
+      >
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" clipRule="evenodd"
+            d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-8-3a1 1 0 100 2 1 1 0 000-2zm-1 4a1 1 0 012 0v3a1 1 0 01-2 0v-3z" />
+        </svg>
+      </button>
+      {show && (
+        <div
+          className="absolute z-50 w-64 bg-white border border-gray-200 rounded-xl shadow-xl p-3 text-left"
+          style={{ bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)' }}
+        >
+          <div className="text-xs font-semibold text-gray-800 mb-1">{guide.name}</div>
+          <p className="text-xs text-gray-600 leading-relaxed mb-2">{guide.summary}</p>
+          <Link
+            to={`/metrics-guide/${guide.id}`}
+            className="text-xs font-medium text-blue-600 hover:underline"
+          >
+            자세히 보기 →
+          </Link>
+          {/* 말풍선 꼬리 */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0"
+            style={{ borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: '6px solid #e5e7eb' }} />
+        </div>
+      )}
+    </span>
+  )
+}
+
+function MetricCard({ label, value, unit = '', color = 'text-primary', guideId }) {
   if (value == null) return null
   return (
     <div className="bg-surface rounded-xl p-4 border-l-4 border-primary">
-      <div className="text-xs text-gray-500 mb-1">{label}</div>
+      <div className="text-xs text-gray-500 mb-1 flex items-center">
+        {label}
+        <MetricTooltip guideId={guideId} />
+      </div>
       <div className={`text-2xl font-bold ${color}`}>
         {typeof value === 'number' ? value.toLocaleString('ko-KR', { maximumFractionDigits: 2 }) : value}
         <span className="text-sm font-normal text-gray-500 ml-1">{unit}</span>
       </div>
     </div>
+  )
+}
+
+function TableRow({ label, value, unit, color, guideId }) {
+  if (value == null) return null
+  return (
+    <tr>
+      <td className="py-1 text-gray-600">
+        <span className="inline-flex items-center gap-0.5">
+          {label}
+          <MetricTooltip guideId={guideId} />
+        </span>
+      </td>
+      <td className={`py-1 font-semibold text-right ${color || ''}`}>
+        {fmt(value)}{unit}
+      </td>
+    </tr>
   )
 }
 
@@ -43,17 +109,16 @@ export default function MetricsDashboard({ metrics, marketData }) {
           <MetricCard label="매출액" value={metrics.revenue} unit="억원" />
           <MetricCard label="영업이익" value={metrics.operating_profit} unit="억원" />
           <MetricCard label="당기순이익" value={metrics.net_profit} unit="억원" />
-          <MetricCard label="EBITDA" value={metrics.ebitda} unit="억원" />
-          <MetricCard label="영업이익률" value={metrics.operating_margin} unit="%" color={rateColor(metrics.operating_margin)} />
-          <MetricCard label="ROE" value={metrics.roe} unit="%" color={rateColor(metrics.roe)} />
-          <MetricCard label="부채비율" value={metrics.debt_to_equity} unit="%" color={debtColor(metrics.debt_to_equity)} />
-          <MetricCard label="유동비율" value={metrics.current_ratio} unit="%" color={rateColor(metrics.current_ratio, 100)} />
+          <MetricCard label="EBITDA" value={metrics.ebitda} unit="억원" guideId="ebitda" />
+          <MetricCard label="영업이익률" value={metrics.operating_margin} unit="%" color={rateColor(metrics.operating_margin)} guideId="operating-margin" />
+          <MetricCard label="ROE" value={metrics.roe} unit="%" color={rateColor(metrics.roe)} guideId="roe" />
+          <MetricCard label="부채비율" value={metrics.debt_to_equity} unit="%" color={debtColor(metrics.debt_to_equity)} guideId="debt-ratio" />
+          <MetricCard label="유동비율" value={metrics.current_ratio} unit="%" color={rateColor(metrics.current_ratio, 100)} guideId="current-ratio" />
         </div>
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Bar chart */}
         {profitData.length > 0 && (
           <div className="bg-white rounded-xl shadow p-6">
             <h3 className="font-bold text-primary mb-4">손익 현황 (억원)</h3>
@@ -69,7 +134,6 @@ export default function MetricsDashboard({ metrics, marketData }) {
           </div>
         )}
 
-        {/* Radar chart */}
         <div className="bg-white rounded-xl shadow p-6">
           <h3 className="font-bold text-primary mb-4">재무 건전성 레이더</h3>
           <ResponsiveContainer width="100%" height={220}>
@@ -90,18 +154,11 @@ export default function MetricsDashboard({ metrics, marketData }) {
             <h4 className="font-semibold text-gray-600 mb-2 border-b pb-1">수익성</h4>
             <table className="w-full">
               <tbody>
-                {[
-                  ['매출총이익률', metrics.gross_margin, '%'],
-                  ['영업이익률', metrics.operating_margin, '%'],
-                  ['순이익률', metrics.net_margin, '%'],
-                  ['ROA', metrics.roa, '%'],
-                  ['EBITDA 마진', metrics.ebitda_margin, '%'],
-                ].map(([label, val, unit]) => val != null && (
-                  <tr key={label}>
-                    <td className="py-1 text-gray-600">{label}</td>
-                    <td className="py-1 font-semibold text-right">{fmt(val)}{unit}</td>
-                  </tr>
-                ))}
+                <TableRow label="매출총이익률" value={metrics.gross_margin} unit="%" />
+                <TableRow label="영업이익률" value={metrics.operating_margin} unit="%" guideId="operating-margin" />
+                <TableRow label="순이익률" value={metrics.net_margin} unit="%" guideId="net-margin" />
+                <TableRow label="ROA" value={metrics.roa} unit="%" guideId="roa" />
+                <TableRow label="EBITDA 마진" value={metrics.ebitda_margin} unit="%" guideId="ebitda" />
               </tbody>
             </table>
           </div>
@@ -109,18 +166,11 @@ export default function MetricsDashboard({ metrics, marketData }) {
             <h4 className="font-semibold text-gray-600 mb-2 border-b pb-1">안정성</h4>
             <table className="w-full">
               <tbody>
-                {[
-                  ['유동비율', metrics.current_ratio, '%'],
-                  ['당좌비율', metrics.quick_ratio, '%'],
-                  ['부채비율', metrics.debt_to_equity, '%'],
-                  ['이자보상배율', metrics.interest_coverage, '배'],
-                  ['자산대비부채', metrics.debt_ratio, '%'],
-                ].map(([label, val, unit]) => val != null && (
-                  <tr key={label}>
-                    <td className="py-1 text-gray-600">{label}</td>
-                    <td className="py-1 font-semibold text-right">{fmt(val)}{unit}</td>
-                  </tr>
-                ))}
+                <TableRow label="유동비율" value={metrics.current_ratio} unit="%" guideId="current-ratio" />
+                <TableRow label="당좌비율" value={metrics.quick_ratio} unit="%" />
+                <TableRow label="부채비율" value={metrics.debt_to_equity} unit="%" guideId="debt-ratio" />
+                <TableRow label="이자보상배율" value={metrics.interest_coverage} unit="배" guideId="interest-coverage" />
+                <TableRow label="자산대비부채" value={metrics.debt_ratio} unit="%" />
               </tbody>
             </table>
           </div>
@@ -128,20 +178,15 @@ export default function MetricsDashboard({ metrics, marketData }) {
             <h4 className="font-semibold text-gray-600 mb-2 border-b pb-1">성장성</h4>
             <table className="w-full">
               <tbody>
-                {[
-                  ['매출 성장률', metrics.revenue_growth, '%'],
-                  ['영업이익 성장률', metrics.operating_profit_growth, '%'],
-                  ['순이익 성장률', metrics.net_profit_growth, '%'],
-                  ['자산 성장률', metrics.asset_growth, '%'],
-                  ['자산회전율', metrics.asset_turnover, '회'],
-                ].map(([label, val, unit]) => val != null && (
-                  <tr key={label}>
-                    <td className="py-1 text-gray-600">{label}</td>
-                    <td className={`py-1 font-semibold text-right ${val > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                      {val > 0 ? '+' : ''}{fmt(val)}{unit}
-                    </td>
-                  </tr>
-                ))}
+                <TableRow label="매출 성장률" value={metrics.revenue_growth} unit="%" guideId="revenue-growth"
+                  color={metrics.revenue_growth > 0 ? 'text-green-600' : 'text-red-500'} />
+                <TableRow label="영업이익 성장률" value={metrics.operating_profit_growth} unit="%"
+                  color={metrics.operating_profit_growth > 0 ? 'text-green-600' : 'text-red-500'} />
+                <TableRow label="순이익 성장률" value={metrics.net_profit_growth} unit="%"
+                  color={metrics.net_profit_growth > 0 ? 'text-green-600' : 'text-red-500'} />
+                <TableRow label="자산 성장률" value={metrics.asset_growth} unit="%"
+                  color={metrics.asset_growth > 0 ? 'text-green-600' : 'text-red-500'} />
+                <TableRow label="자산회전율" value={metrics.asset_turnover} unit="회" />
               </tbody>
             </table>
           </div>
@@ -152,12 +197,32 @@ export default function MetricsDashboard({ metrics, marketData }) {
           <div className="mt-4 border-t pt-4">
             <h4 className="font-semibold text-gray-600 mb-2">시장 지표</h4>
             <div className="flex flex-wrap gap-4 text-sm">
-              {marketData.pe_ratio > 0 && <span>PER <strong>{marketData.pe_ratio}배</strong></span>}
-              {marketData.pb_ratio > 0 && <span>PBR <strong>{marketData.pb_ratio}배</strong></span>}
+              {marketData.pe_ratio > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  PER <MetricTooltip guideId="per" /> <strong>{marketData.pe_ratio}배</strong>
+                </span>
+              )}
+              {marketData.pb_ratio > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  PBR <MetricTooltip guideId="pbr" /> <strong>{marketData.pb_ratio}배</strong>
+                </span>
+              )}
               {marketData.ps_ratio > 0 && <span>PSR <strong>{marketData.ps_ratio}배</strong></span>}
-              {marketData.ev_ebitda > 0 && <span>EV/EBITDA <strong>{marketData.ev_ebitda}배</strong></span>}
-              {marketData.dividend_yield > 0 && <span>배당수익률 <strong>{marketData.dividend_yield}%</strong></span>}
-              {marketData.beta !== 0 && <span>베타 <strong>{marketData.beta}</strong></span>}
+              {marketData.ev_ebitda > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  EV/EBITDA <MetricTooltip guideId="ev-ebitda" /> <strong>{marketData.ev_ebitda}배</strong>
+                </span>
+              )}
+              {marketData.dividend_yield > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  배당수익률 <MetricTooltip guideId="dividend-yield" /> <strong>{marketData.dividend_yield}%</strong>
+                </span>
+              )}
+              {marketData.beta !== 0 && (
+                <span className="inline-flex items-center gap-1">
+                  베타 <MetricTooltip guideId="beta" /> <strong>{marketData.beta}</strong>
+                </span>
+              )}
             </div>
           </div>
         )}
