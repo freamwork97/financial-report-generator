@@ -11,10 +11,13 @@ import CompanyCasesIndexPage from './pages/company-cases/CompanyCasesIndexPage'
 import CompanyCaseDetailPage from './pages/company-cases/CompanyCaseDetailPage'
 import { getMetrics, streamAnalysis, downloadPdf } from './api'
 
+const ADSENSE_ALLOWED_PREFIXES = ['/metrics-guide', '/sector-guide', '/company-cases']
+
 function AdSenseLoader() {
   const { pathname } = useLocation()
+  const isAllowed = ADSENSE_ALLOWED_PREFIXES.some((prefix) => pathname.startsWith(prefix))
   useEffect(() => {
-    if (pathname === '/') return
+    if (!isAllowed) return
     const script = document.createElement('script')
     script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5381965531835429'
     script.async = true
@@ -23,7 +26,7 @@ function AdSenseLoader() {
     return () => {
       document.head.removeChild(script)
     }
-  }, [pathname])
+  }, [isAllowed])
   return null
 }
 
