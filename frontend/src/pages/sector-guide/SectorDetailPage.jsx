@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, Navigate } from 'react-router-dom'
 import { getSectorById } from '../../data/sectorGuideData'
 
 const importanceColors = {
@@ -11,12 +11,7 @@ export default function SectorDetailPage() {
   const { sectorId } = useParams()
   const sector = getSectorById(sectorId)
 
-  if (!sector) return (
-    <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-      <h1 className="text-2xl font-bold text-gray-700">업종을 찾을 수 없습니다</h1>
-      <Link to="/sector-guide" className="mt-4 inline-block text-blue-600 hover:underline">← 업종별 가이드로 돌아가기</Link>
-    </div>
-  )
+  if (!sector) return <Navigate to="/sector-guide" replace />
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8">

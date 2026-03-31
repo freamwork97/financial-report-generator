@@ -1,16 +1,11 @@
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, Navigate } from 'react-router-dom'
 import { getMetricById, metricsData } from '../../data/metricsGuideData'
 
 export default function MetricDetailPage() {
   const { metricId } = useParams()
   const metric = getMetricById(metricId)
 
-  if (!metric) return (
-    <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-      <h1 className="text-2xl font-bold text-gray-700">지표를 찾을 수 없습니다</h1>
-      <Link to="/metrics-guide" className="mt-4 inline-block text-blue-600 hover:underline">← 재무지표 사전으로 돌아가기</Link>
-    </div>
-  )
+  if (!metric) return <Navigate to="/metrics-guide" replace />
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8">

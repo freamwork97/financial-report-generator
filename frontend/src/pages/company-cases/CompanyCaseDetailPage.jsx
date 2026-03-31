@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
 import { getCompanyById, companyCasesData } from '../../data/companyCasesData'
 
 export default function CompanyCaseDetailPage() {
@@ -6,12 +6,7 @@ export default function CompanyCaseDetailPage() {
   const navigate = useNavigate()
   const company = getCompanyById(companyId)
 
-  if (!company) return (
-    <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-      <h1 className="text-2xl font-bold text-gray-700">기업을 찾을 수 없습니다</h1>
-      <Link to="/company-cases" className="mt-4 inline-block text-blue-600 hover:underline">← 기업 사례집으로 돌아가기</Link>
-    </div>
-  )
+  if (!company) return <Navigate to="/company-cases" replace />
 
   const highlights = company.financialHighlights
 
