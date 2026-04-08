@@ -18,12 +18,18 @@ function AdSenseLoader() {
   const isAllowed = ADSENSE_ALLOWED_PREFIXES.some((prefix) => pathname.startsWith(prefix))
   useEffect(() => {
     if (!isAllowed) return
+    const meta = document.createElement('meta')
+    meta.name = 'google-adsense-account'
+    meta.content = 'ca-pub-5381965531835429'
+    document.head.appendChild(meta)
+
     const script = document.createElement('script')
     script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5381965531835429'
     script.async = true
     script.crossOrigin = 'anonymous'
     document.head.appendChild(script)
     return () => {
+      document.head.removeChild(meta)
       document.head.removeChild(script)
     }
   }, [isAllowed])
