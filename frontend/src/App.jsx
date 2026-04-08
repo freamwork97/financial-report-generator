@@ -11,7 +11,8 @@ import CompanyCasesIndexPage from './pages/company-cases/CompanyCasesIndexPage'
 import CompanyCaseDetailPage from './pages/company-cases/CompanyCaseDetailPage'
 import { getMetrics, streamAnalysis, downloadPdf } from './api'
 
-const ADSENSE_ALLOWED_PREFIXES = ['/metrics-guide', '/sector-guide', '/company-cases']
+// 광고 허용: 목록(index) 페이지 제외, 상세(detail) 페이지만 허용
+const ADSENSE_ALLOWED_PREFIXES = ['/metrics-guide/', '/sector-guide/', '/company-cases/']
 
 function AdSenseLoader() {
   const { pathname } = useLocation()
