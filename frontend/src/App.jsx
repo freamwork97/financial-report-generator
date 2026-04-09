@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import SearchPage from './pages/SearchPage'
 import ResultsPage from './pages/ResultsPage'
@@ -9,6 +9,9 @@ import SectorGuideIndexPage from './pages/sector-guide/SectorGuideIndexPage'
 import SectorDetailPage from './pages/sector-guide/SectorDetailPage'
 import CompanyCasesIndexPage from './pages/company-cases/CompanyCasesIndexPage'
 import CompanyCaseDetailPage from './pages/company-cases/CompanyCaseDetailPage'
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
+import AboutPage from './pages/AboutPage'
+import ContactPage from './pages/ContactPage'
 import { getMetrics, streamAnalysis, downloadPdf } from './api'
 
 // 광고 허용: 목록(index) 페이지 제외, 상세(detail) 페이지만 허용
@@ -19,22 +22,34 @@ function AdSenseLoader() {
   const isAllowed = ADSENSE_ALLOWED_PREFIXES.some((prefix) => pathname.startsWith(prefix))
   useEffect(() => {
     if (!isAllowed) return
-    const meta = document.createElement('meta')
-    meta.name = 'google-adsense-account'
-    meta.content = 'ca-pub-5381965531835429'
-    document.head.appendChild(meta)
-
     const script = document.createElement('script')
     script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5381965531835429'
     script.async = true
     script.crossOrigin = 'anonymous'
     document.head.appendChild(script)
     return () => {
-      document.head.removeChild(meta)
       document.head.removeChild(script)
     }
   }, [isAllowed])
   return null
+}
+
+function Footer() {
+  return (
+    <footer className="mt-12 py-6 border-t border-gray-200 text-center text-sm text-gray-500">
+      <div className="max-w-7xl mx-auto px-4 flex flex-wrap justify-center gap-4">
+        <span>© {new Date().getFullYear()} 재무제표 분석 리포트 생성기</span>
+        <span>·</span>
+        <Link to="/about" className="hover:text-gray-700 underline">서비스 소개</Link>
+        <span>·</span>
+        <Link to="/contact" className="hover:text-gray-700 underline">문의하기</Link>
+        <span>·</span>
+        <Link to="/privacy-policy" className="hover:text-gray-700 underline">
+          개인정보처리방침
+        </Link>
+      </div>
+    </footer>
+  )
 }
 
 function AppRoutes() {
@@ -134,7 +149,11 @@ function AppRoutes() {
         <Route path="/sector-guide/:sectorId" element={<SectorDetailPage />} />
         <Route path="/company-cases" element={<CompanyCasesIndexPage />} />
         <Route path="/company-cases/:companyId" element={<CompanyCaseDetailPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
       </Routes>
+      <Footer />
     </div>
   )
 }
