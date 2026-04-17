@@ -1,14 +1,21 @@
 import React from 'react'
-import ReactDOM from 'react-dom/client'
+import ReactDOM, { hydrateRoot } from 'react-dom/client'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import App from './App'
 import './index.css'
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const root = document.getElementById('root')
+const app = (
   <React.StrictMode>
     <App />
     <Analytics />
     <SpeedInsights />
   </React.StrictMode>
 )
+
+if (root.hasChildNodes()) {
+  hydrateRoot(root, app)
+} else {
+  ReactDOM.createRoot(root).render(app)
+}

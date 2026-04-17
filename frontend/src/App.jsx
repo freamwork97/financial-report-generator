@@ -52,7 +52,7 @@ function Footer() {
   )
 }
 
-function AppRoutes() {
+export function AppRoutes() {
   const navigate = useNavigate()
   const [selected, setSelected] = useState(null)
   const [metricsData, setMetricsData] = useState(null)
