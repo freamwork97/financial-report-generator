@@ -4,7 +4,7 @@ export default function SearchPage({ onSelect, isLoading, error }) {
   return (
     <main className="max-w-3xl mx-auto px-4 py-12 space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-primary mb-2">기업 재무 분석</h2>
+        <h1 className="text-3xl font-bold text-primary mb-2">기업 재무 분석</h1>
         <p className="text-gray-500">회사명을 검색하고 AI 기반 재무제표 분석 리포트를 생성하세요</p>
       </div>
 
