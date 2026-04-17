@@ -13,6 +13,7 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import AboutPage from './pages/AboutPage'
 import ContactPage from './pages/ContactPage'
 import { getMetrics, streamAnalysis, downloadPdf } from './api'
+import { applySeoMetaToDocument, getSeoMeta } from './seoMeta'
 
 // 광고 허용: 목록(index) 페이지 제외, 상세(detail) 페이지만 허용
 const ADSENSE_ALLOWED_PREFIXES = ['/metrics-guide/', '/sector-guide/', '/company-cases/']
@@ -31,6 +32,16 @@ function AdSenseLoader() {
       document.head.removeChild(script)
     }
   }, [isAllowed])
+  return null
+}
+
+function SeoMetaUpdater() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    applySeoMetaToDocument(getSeoMeta(pathname))
+  }, [pathname])
+
   return null
 }
 
@@ -114,6 +125,7 @@ export function AppRoutes() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SeoMetaUpdater />
       <AdSenseLoader />
       <NavBar />
       <Routes>

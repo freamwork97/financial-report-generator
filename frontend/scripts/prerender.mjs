@@ -9,15 +9,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..')
 const distDir = path.join(rootDir, 'dist')
 
-const resolveSiteUrl = () => {
-  const explicitUrl = process.env.VITE_SITE_URL || process.env.SITE_URL
-  const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL
-  const rawUrl = explicitUrl || (vercelUrl ? `https://${vercelUrl}` : 'https://financial-report-generator-taupe.vercel.app')
-  return rawUrl.replace(/\/$/, '')
-}
-
-const siteUrl = resolveSiteUrl()
-
 const escapeHtml = (value) =>
   String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -33,11 +24,6 @@ const escapeXml = (value) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;')
-
-const stripText = (value, maxLength = 155) => {
-  const text = String(value ?? '').replace(/\s+/g, ' ').trim()
-  return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text
-}
 
 const originalConsoleError = console.error
 console.error = (...args) => {
@@ -55,7 +41,7 @@ const writeHtml = async (url, html) => {
   await fs.writeFile(filePath, html)
 }
 
-const writeSeoFiles = async (routes) => {
+const writeSeoFiles = async (routes, siteUrl) => {
   const today = new Date().toISOString().slice(0, 10)
   const sitemap = [
     '<?xml version="1.0" encoding="UTF-8"?>',
@@ -86,24 +72,28 @@ const writeSeoFiles = async (routes) => {
   await fs.writeFile(path.join(distDir, 'robots.txt'), robots)
 }
 
-const applyHead = (template, { url, title, description }) => {
-  const canonical = siteUrl
-    ? `<link rel="canonical" href="${escapeHtml(`${siteUrl}${url}`)}" />`
-    : ''
-  const meta = [
-    canonical,
-    `<meta property="og:title" content="${escapeHtml(title)}" />`,
-    `<meta property="og:description" content="${escapeHtml(description)}" />`,
-    '<meta property="og:type" content="article" />',
-  ].filter(Boolean).join('\n    ')
+const applyHead = (template, routeMeta, siteUrl) => {
+  const canonicalUrl = `${siteUrl}${routeMeta.url}`
+  const metaTags = [
+    `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`,
+    `<meta name="robots" content="${escapeHtml(routeMeta.robots)}" />`,
+    `<meta property="og:title" content="${escapeHtml(routeMeta.title)}" />`,
+    `<meta property="og:description" content="${escapeHtml(routeMeta.description)}" />`,
+    `<meta property="og:type" content="${escapeHtml(routeMeta.ogType)}" />`,
+    `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`,
+    '<meta property="og:site_name" content="재무제표 분석 리포트 생성기" />',
+    '<meta name="twitter:card" content="summary" />',
+    `<meta name="twitter:title" content="${escapeHtml(routeMeta.title)}" />`,
+    `<meta name="twitter:description" content="${escapeHtml(routeMeta.description)}" />`,
+  ].join('\n    ')
 
   return template
-    .replace(/<title>.*?<\/title>/s, `<title>${escapeHtml(title)}</title>`)
+    .replace(/<title>.*?<\/title>/s, `<title>${escapeHtml(routeMeta.title)}</title>`)
     .replace(
       /<meta name="description" content=".*?" \/>/s,
-      `<meta name="description" content="${escapeHtml(description)}" />`,
+      `<meta name="description" content="${escapeHtml(routeMeta.description)}" />`,
     )
-    .replace('</head>', `    ${meta}\n  </head>`)
+    .replace('</head>', `    ${metaTags}\n  </head>`)
 }
 
 const vite = await createServer({
@@ -133,66 +123,13 @@ const vite = await createServer({
 try {
   const template = await fs.readFile(path.join(distDir, 'index.html'), 'utf-8')
   const { default: PrerenderApp } = await vite.ssrLoadModule('/src/PrerenderApp.jsx')
-  const { metricsData } = await vite.ssrLoadModule('/src/data/metricsGuideData.js')
-  const { sectorsData } = await vite.ssrLoadModule('/src/data/sectorGuideData.js')
-  const { companyCasesData } = await vite.ssrLoadModule('/src/data/companyCasesData.js')
-
-  const routes = [
-    {
-      url: '/',
-      title: '재무제표 분석 리포트 생성기',
-      description: 'DART 기반 기업 재무제표 자동 분석 리포트 생성기입니다. 재무지표 사전, 업종별 투자 가이드, 기업 분석 사례를 제공합니다.',
-    },
-    {
-      url: '/metrics-guide',
-      title: '재무지표 사전',
-      description: 'PER, PBR, ROE, EV/EBITDA 등 주식 투자에 필요한 핵심 재무지표의 계산식과 해석 기준을 정리했습니다.',
-    },
-    {
-      url: '/sector-guide',
-      title: '업종별 분석 가이드',
-      description: '반도체, 금융, 바이오, 유통, IT서비스, 건설 업종별 핵심 재무지표와 분석 순서를 안내합니다.',
-    },
-    {
-      url: '/company-cases',
-      title: '기업 분석 사례집',
-      description: '국내 주요 상장기업의 사업 구조, 재무 지표, 투자 포인트, 리스크를 사례 중심으로 정리했습니다.',
-    },
-    {
-      url: '/about',
-      title: '서비스 소개',
-      description: '재무제표 분석 리포트 생성기의 목적, 주요 기능, 데이터 출처, 투자 유의사항을 안내합니다.',
-    },
-    {
-      url: '/contact',
-      title: '문의하기',
-      description: '서비스 이용 문의, 오류 신고, 데이터 오류, 개인정보 관련 문의를 접수하는 페이지입니다.',
-    },
-    {
-      url: '/privacy-policy',
-      title: '개인정보처리방침',
-      description: '재무제표 분석 리포트 생성기의 개인정보 처리 방식, 쿠키 사용, 이용자 권리를 안내합니다.',
-    },
-    ...metricsData.map((metric) => ({
-      url: `/metrics-guide/${metric.id}`,
-      title: `${metric.fullName} 계산법과 해석 기준`,
-      description: stripText(metric.summary || metric.description),
-    })),
-    ...sectorsData.map((sector) => ({
-      url: `/sector-guide/${sector.id}`,
-      title: `${sector.name} 업종 분석 가이드`,
-      description: stripText(sector.summary || sector.description),
-    })),
-    ...companyCasesData.map((company) => ({
-      url: `/company-cases/${company.id}`,
-      title: `${company.name} 재무 분석 사례`,
-      description: stripText(company.businessOverview),
-    })),
-  ]
+  const { getAllSeoRoutes, getSeoMeta, getSiteUrl } = await vite.ssrLoadModule('/src/seoMeta.js')
+  const siteUrl = getSiteUrl(process.env)
+  const routes = getAllSeoRoutes()
 
   for (const route of routes) {
     const appHtml = renderToString(React.createElement(PrerenderApp, { url: route.url }))
-    const html = applyHead(template, route).replace(
+    const html = applyHead(template, getSeoMeta(route.url), siteUrl).replace(
       '<div id="root"></div>',
       `<div id="root">${appHtml}</div>`,
     )
@@ -200,7 +137,7 @@ try {
     await writeHtml(route.url, html)
   }
 
-  await writeSeoFiles(routes)
+  await writeSeoFiles(routes, siteUrl)
 
   console.log(`Prerendered ${routes.length} routes.`)
   console.log(`Generated robots.txt and sitemap.xml for ${siteUrl}.`)
