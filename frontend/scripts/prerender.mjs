@@ -12,7 +12,7 @@ const distDir = path.join(rootDir, 'dist')
 const resolveSiteUrl = () => {
   const explicitUrl = process.env.VITE_SITE_URL || process.env.SITE_URL
   const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL
-  const rawUrl = explicitUrl || (vercelUrl ? `https://${vercelUrl}` : 'https://financial-report-generator.vercel.app')
+  const rawUrl = explicitUrl || (vercelUrl ? `https://${vercelUrl}` : 'https://financial-report-generator-taupe.vercel.app')
   return rawUrl.replace(/\/$/, '')
 }
 
