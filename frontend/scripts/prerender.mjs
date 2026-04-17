@@ -8,7 +8,15 @@ import { renderToString } from 'react-dom/server'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..')
 const distDir = path.join(rootDir, 'dist')
-const siteUrl = (process.env.VITE_SITE_URL || process.env.SITE_URL || '').replace(/\/$/, '')
+
+const resolveSiteUrl = () => {
+  const explicitUrl = process.env.VITE_SITE_URL || process.env.SITE_URL
+  const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL
+  const rawUrl = explicitUrl || (vercelUrl ? `https://${vercelUrl}` : 'https://financial-report-generator.vercel.app')
+  return rawUrl.replace(/\/$/, '')
+}
+
+const siteUrl = resolveSiteUrl()
 
 const escapeHtml = (value) =>
   String(value ?? '')
@@ -17,6 +25,14 @@ const escapeHtml = (value) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
+
+const escapeXml = (value) =>
+  String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
 
 const stripText = (value, maxLength = 155) => {
   const text = String(value ?? '').replace(/\s+/g, ' ').trim()
@@ -37,6 +53,37 @@ const writeHtml = async (url, html) => {
 
   await fs.mkdir(path.dirname(filePath), { recursive: true })
   await fs.writeFile(filePath, html)
+}
+
+const writeSeoFiles = async (routes) => {
+  const today = new Date().toISOString().slice(0, 10)
+  const sitemap = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ...routes.map((route) => [
+      '  <url>',
+      `    <loc>${escapeXml(`${siteUrl}${route.url}`)}</loc>`,
+      `    <lastmod>${today}</lastmod>`,
+      '    <changefreq>weekly</changefreq>',
+      route.url === '/'
+        ? '    <priority>1.0</priority>'
+        : `    <priority>${route.url.split('/').length > 3 ? '0.7' : '0.8'}</priority>`,
+      '  </url>',
+    ].join('\n')),
+    '</urlset>',
+    '',
+  ].join('\n')
+
+  const robots = [
+    'User-agent: *',
+    'Allow: /',
+    '',
+    `Sitemap: ${siteUrl}/sitemap.xml`,
+    '',
+  ].join('\n')
+
+  await fs.writeFile(path.join(distDir, 'sitemap.xml'), sitemap)
+  await fs.writeFile(path.join(distDir, 'robots.txt'), robots)
 }
 
 const applyHead = (template, { url, title, description }) => {
@@ -153,7 +200,10 @@ try {
     await writeHtml(route.url, html)
   }
 
+  await writeSeoFiles(routes)
+
   console.log(`Prerendered ${routes.length} routes.`)
+  console.log(`Generated robots.txt and sitemap.xml for ${siteUrl}.`)
 } finally {
   await vite.close()
 }
