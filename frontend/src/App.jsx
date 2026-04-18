@@ -12,7 +12,7 @@ import CompanyCaseDetailPage from './pages/company-cases/CompanyCaseDetailPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import AboutPage from './pages/AboutPage'
 import ContactPage from './pages/ContactPage'
-import { getMetrics, streamAnalysis, downloadPdf } from './api'
+import { getMetrics, streamAnalysis, downloadPdf, searchCompany } from './api'
 import { applySeoMetaToDocument, getSeoMeta } from './seoMeta'
 
 // 광고 허용: 목록(index) 페이지 제외, 상세(detail) 페이지만 허용
@@ -65,6 +65,7 @@ function Footer() {
 
 export function AppRoutes() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [selected, setSelected] = useState(null)
   const [metricsData, setMetricsData] = useState(null)
   const [analysis, setAnalysis] = useState('')
@@ -90,6 +91,26 @@ export function AppRoutes() {
       setIsLoadingMetrics(false)
     }
   }
+
+  useEffect(() => {
+    const autoAnalyze = location.state?.autoAnalyze
+    if (!autoAnalyze) return
+    window.history.replaceState({}, '')
+
+    // 하드코딩된 corpCode 대신 DART 검색으로 실제 corp_code를 가져옴
+    searchCompany(autoAnalyze.company_name)
+      .then((res) => {
+        const results = res.data.results || []
+        const exactMatch = results.find((c) => c.corp_name === autoAnalyze.company_name)
+        const listedMatch = results.find((c) => c.stock_code)
+        const best = exactMatch || listedMatch || results[0]
+        handleSelect(best
+          ? { ...autoAnalyze, corp_code: best.corp_code, company_name: best.corp_name }
+          : autoAnalyze
+        )
+      })
+      .catch(() => handleSelect(autoAnalyze))
+  }, [location.state])
 
   const handleBack = () => {
     navigate('/')

@@ -1,7 +1,98 @@
 import yfinance as yf
 import pandas as pd
 from backend.data.cache import get_cache
-import json
+
+
+def _to_float(value) -> float | None:
+    try:
+        if value is None or pd.isna(value):
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _round_float(value, digits: int = 2) -> float | None:
+    number = _to_float(value)
+    return round(number, digits) if number is not None else None
+
+
+def _normalize_yield_percent(value) -> float | None:
+    """Yahoo may return dividend yields as either 0.025 or 2.5."""
+    number = _to_float(value)
+    if number is None or number <= 0:
+        return None
+    percent = number * 100 if number <= 1 else number
+    return round(percent, 2)
+
+
+def _current_price(info: dict) -> float | None:
+    for key in ("currentPrice", "regularMarketPrice", "previousClose"):
+        price = _to_float(info.get(key))
+        if price and price > 0:
+            return price
+    return None
+
+
+def _recent_dividend_total(dividends) -> float | None:
+    if dividends is None or getattr(dividends, "empty", True):
+        return None
+
+    series = dividends.dropna()
+    series = series[series > 0]
+    if series.empty:
+        return None
+
+    index = pd.to_datetime(series.index)
+    now = pd.Timestamp.now(tz=index.tz) if index.tz else pd.Timestamp.now()
+    cutoff = now - pd.Timedelta(days=365)
+    recent = series[index >= cutoff]
+    if recent.empty:
+        return None
+
+    total = float(recent.sum())
+    return round(total, 4) if total > 0 else None
+
+
+def _calculate_dividend_yield(info: dict, dividends=None) -> dict:
+    price = _current_price(info)
+    annual_dividend = _recent_dividend_total(dividends)
+    if price and annual_dividend:
+        return {
+            "annual_dividend": annual_dividend,
+            "dividend_yield": round((annual_dividend / price) * 100, 2),
+            "dividend_yield_source": "ttm_dividends",
+        }
+
+    annual_dividend = _to_float(info.get("trailingAnnualDividendRate"))
+    if price and annual_dividend and annual_dividend > 0:
+        return {
+            "annual_dividend": round(annual_dividend, 4),
+            "dividend_yield": round((annual_dividend / price) * 100, 2),
+            "dividend_yield_source": "trailing_annual_dividend_rate",
+        }
+
+    yahoo_yield = _normalize_yield_percent(info.get("dividendYield"))
+    if yahoo_yield is not None:
+        return {
+            "annual_dividend": None,
+            "dividend_yield": yahoo_yield,
+            "dividend_yield_source": "yahoo_dividend_yield",
+        }
+
+    annual_dividend = _to_float(info.get("dividendRate"))
+    if price and annual_dividend and annual_dividend > 0:
+        return {
+            "annual_dividend": round(annual_dividend, 4),
+            "dividend_yield": round((annual_dividend / price) * 100, 2),
+            "dividend_yield_source": "dividend_rate",
+        }
+
+    return {
+        "annual_dividend": None,
+        "dividend_yield": None,
+        "dividend_yield_source": None,
+    }
 
 
 class YFinanceClient:
@@ -31,6 +122,7 @@ class YFinanceClient:
         ]
 
         info = stock.info
+        dividend = _calculate_dividend_yield(info, hist.get("Dividends") if "Dividends" in hist else None)
         result = {
             "ticker": ticker,
             "prices": prices,
@@ -39,10 +131,12 @@ class YFinanceClient:
                 "market_cap": info.get("marketCap"),
                 "pe_ratio": info.get("trailingPE"),
                 "pb_ratio": info.get("priceToBook"),
-                "dividend_yield": info.get("dividendYield"),
+                "dividend_yield": dividend["dividend_yield"],
+                "annual_dividend": dividend["annual_dividend"],
+                "dividend_yield_source": dividend["dividend_yield_source"],
                 "52w_high": info.get("fiftyTwoWeekHigh"),
                 "52w_low": info.get("fiftyTwoWeekLow"),
-                "current_price": info.get("currentPrice") or info.get("regularMarketPrice"),
+                "current_price": _current_price(info),
             },
         }
 
@@ -58,14 +152,18 @@ class YFinanceClient:
 
         stock = yf.Ticker(ticker)
         info = stock.info
+        dividends = stock.dividends
+        dividend = _calculate_dividend_yield(info, dividends)
         result = {
             "market_cap": info.get("marketCap"),
-            "pe_ratio": round(float(info.get("trailingPE", 0) or 0), 2),
-            "pb_ratio": round(float(info.get("priceToBook", 0) or 0), 2),
-            "ps_ratio": round(float(info.get("priceToSalesTrailing12Months", 0) or 0), 2),
-            "ev_ebitda": round(float(info.get("enterpriseToEbitda", 0) or 0), 2),
-            "dividend_yield": round(float(info.get("dividendYield", 0) or 0) * 100, 2),
-            "beta": round(float(info.get("beta", 0) or 0), 2),
+            "pe_ratio": _round_float(info.get("trailingPE")),
+            "pb_ratio": _round_float(info.get("priceToBook")),
+            "ps_ratio": _round_float(info.get("priceToSalesTrailing12Months")),
+            "ev_ebitda": _round_float(info.get("enterpriseToEbitda")),
+            "dividend_yield": dividend["dividend_yield"],
+            "annual_dividend": dividend["annual_dividend"],
+            "dividend_yield_source": dividend["dividend_yield_source"],
+            "beta": _round_float(info.get("beta")),
         }
 
         await cache.set("yf_market", {"ticker": ticker}, result, ttl_hours=1)

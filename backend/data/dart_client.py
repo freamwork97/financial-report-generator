@@ -7,6 +7,10 @@ from backend.data.cache import get_cache
 
 
 DART_BASE_URL = "https://opendart.fss.or.kr/api"
+FS_DIV_LABELS = {
+    "CFS": "연결재무제표",
+    "OFS": "개별재무제표",
+}
 
 
 class DartClient:
@@ -83,19 +87,36 @@ class DartClient:
         return None
 
     async def get_financial_statements(
-        self, corp_code: str, year: int, report_code: str = "11011"
+        self,
+        corp_code: str,
+        year: int,
+        report_code: str = "11011",
+        fs_div: str | None = None,
     ) -> dict:
         """
         재무제표 조회 (단일 회사)
+        연결재무제표(CFS) → 개별재무제표(OFS) 순으로 폴백
         report_code: 11011=사업보고서, 11012=반기보고서, 11013=1분기보고서, 11014=3분기보고서
         """
-        params = {
-            "corp_code": corp_code,
-            "bsns_year": str(year),
-            "reprt_code": report_code,
-            "fs_div": "CFS",  # 연결재무제표
-        }
-        return await self._get("fnlttSinglAcntAll", params)
+        fs_divs = [fs_div] if fs_div else ["CFS", "OFS"]
+        result = {}
+        for current_fs_div in fs_divs:
+            params = {
+                "corp_code": corp_code,
+                "bsns_year": str(year),
+                "reprt_code": report_code,
+                "fs_div": current_fs_div,
+            }
+            result = await self._get("fnlttSinglAcntAll", params)
+            if result.get("status") == "000":
+                enriched = dict(result)
+                enriched["_requested_year"] = year
+                enriched["_resolved_year"] = year
+                enriched["_fs_div"] = current_fs_div
+                enriched["_fs_div_label"] = FS_DIV_LABELS.get(current_fs_div, current_fs_div)
+                return enriched
+
+        return result
 
     async def get_company_info(self, corp_code: str) -> dict:
         """기업 기본 정보 조회"""

@@ -26,8 +26,14 @@ async def generate_report_pdf(req: ReportRequest):
         raise HTTPException(404, "재무제표 조회 실패")
 
     current = parse_dart_financials(current_data)
+    fs_div = current_data.get("_fs_div")
     try:
-        prev_data = await dart.get_financial_statements(req.corp_code, req.year - 1, req.report_code)
+        prev_data = await dart.get_financial_statements(
+            req.corp_code,
+            req.year - 1,
+            req.report_code,
+            fs_div=fs_div,
+        )
         previous = parse_dart_financials(prev_data) if prev_data.get("status") == "000" else None
     except Exception:
         previous = None

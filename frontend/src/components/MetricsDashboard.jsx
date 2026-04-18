@@ -203,28 +203,28 @@ export default function MetricsDashboard({ metrics, marketData }) {
           <div className="mt-4 border-t pt-4">
             <h4 className="font-semibold text-gray-600 mb-2">시장 지표</h4>
             <div className="flex flex-wrap gap-4 text-sm">
-              {marketData.pe_ratio > 0 && (
+              {marketData.pe_ratio != null && marketData.pe_ratio > 0 && (
                 <span className="inline-flex items-center gap-1">
                   PER <MetricTooltip guideId="per" /> <strong>{marketData.pe_ratio}배</strong>
                 </span>
               )}
-              {marketData.pb_ratio > 0 && (
+              {marketData.pb_ratio != null && marketData.pb_ratio > 0 && (
                 <span className="inline-flex items-center gap-1">
                   PBR <MetricTooltip guideId="pbr" /> <strong>{marketData.pb_ratio}배</strong>
                 </span>
               )}
-              {marketData.ps_ratio > 0 && <span>PSR <strong>{marketData.ps_ratio}배</strong></span>}
-              {marketData.ev_ebitda > 0 && (
+              {marketData.ps_ratio != null && marketData.ps_ratio > 0 && <span>PSR <strong>{marketData.ps_ratio}배</strong></span>}
+              {marketData.ev_ebitda != null && marketData.ev_ebitda > 0 && (
                 <span className="inline-flex items-center gap-1">
                   EV/EBITDA <MetricTooltip guideId="ev-ebitda" /> <strong>{marketData.ev_ebitda}배</strong>
                 </span>
               )}
-              {marketData.dividend_yield > 0 && (
+              {marketData.dividend_yield != null && marketData.dividend_yield > 0 && (
                 <span className="inline-flex items-center gap-1">
                   배당수익률 <MetricTooltip guideId="dividend-yield" /> <strong>{marketData.dividend_yield}%</strong>
                 </span>
               )}
-              {marketData.beta !== 0 && (
+              {marketData.beta != null && marketData.beta !== 0 && (
                 <span className="inline-flex items-center gap-1">
                   베타 <MetricTooltip guideId="beta" /> <strong>{marketData.beta}</strong>
                 </span>

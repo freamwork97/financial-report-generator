@@ -9,6 +9,21 @@ export default function CompanyCaseDetailPage() {
   if (!company) return <Navigate to="/company-cases" replace />
 
   const highlights = company.financialHighlights
+  const CURRENT_YEAR = new Date().getFullYear()
+
+  const handleStartAnalysis = () => {
+    navigate('/', {
+      state: {
+        autoAnalyze: {
+          corp_code: company.corpCode,
+          stock_code: company.stockCode + (company.exchange === 'KOSDAQ' ? '.KQ' : '.KS'),
+          company_name: company.name,
+          year: CURRENT_YEAR - 1,
+          report_code: '11011',
+        },
+      },
+    })
+  }
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8">
@@ -36,7 +51,7 @@ export default function CompanyCaseDetailPage() {
             <p className="text-sm text-gray-500 mt-1">시가총액 {company.marketCap}</p>
           </div>
           <button
-            onClick={() => navigate('/')}
+            onClick={handleStartAnalysis}
             className="text-white px-5 py-2.5 rounded-lg font-medium hover:opacity-90 transition-opacity text-sm"
             style={{ backgroundColor: '#e94560' }}
           >
@@ -125,7 +140,7 @@ export default function CompanyCaseDetailPage() {
         <h3 className="text-xl font-bold mb-2">최신 데이터로 다시 분석해보세요</h3>
         <p className="text-blue-200 text-sm mb-6">DART 공시 데이터 기반 AI 재무 분석 리포트를 무료로 생성하세요</p>
         <button
-          onClick={() => navigate('/')}
+          onClick={handleStartAnalysis}
           className="bg-white font-bold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
           style={{ color: '#0f3460' }}
         >

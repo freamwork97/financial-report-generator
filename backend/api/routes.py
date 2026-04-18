@@ -29,10 +29,16 @@ async def get_metrics(req: ReportRequest):
     if current_data.get("status") != "000":
         raise HTTPException(404, f"재무제표 조회 실패: {current_data.get('message', '')}")
     current = parse_dart_financials(current_data)
+    fs_div = current_data.get("_fs_div")
 
     # 전기 (동일 분기 전년도)
     try:
-        prev_data = await dart.get_financial_statements(req.corp_code, req.year - 1, req.report_code)
+        prev_data = await dart.get_financial_statements(
+            req.corp_code,
+            req.year - 1,
+            req.report_code,
+            fs_div=fs_div,
+        )
         previous = parse_dart_financials(prev_data) if prev_data.get("status") == "000" else None
     except Exception:
         previous = None
@@ -56,6 +62,12 @@ async def get_metrics(req: ReportRequest):
         "market_data": market_data,
         "price_history": price_data.get("prices", []),
         "raw_financials": {k: v for k, v in current.items() if v is not None},
+        "statement_info": {
+            "requested_year": req.year,
+            "resolved_year": current_data.get("_resolved_year", req.year),
+            "fs_div": fs_div,
+            "fs_div_label": current_data.get("_fs_div_label"),
+        },
     }
 
 
@@ -67,9 +79,15 @@ async def analyze_stream(req: ReportRequest):
     if current_data.get("status") != "000":
         raise HTTPException(404, "재무제표 조회 실패")
     current = parse_dart_financials(current_data)
+    fs_div = current_data.get("_fs_div")
 
     try:
-        prev_data = await dart.get_financial_statements(req.corp_code, req.year - 1, req.report_code)
+        prev_data = await dart.get_financial_statements(
+            req.corp_code,
+            req.year - 1,
+            req.report_code,
+            fs_div=fs_div,
+        )
         previous = parse_dart_financials(prev_data) if prev_data.get("status") == "000" else None
     except Exception:
         previous = None
