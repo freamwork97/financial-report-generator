@@ -1,0 +1,31 @@
+name = "frontend_agent"
+description = "React, Recharts, TailwindCSS, API consumption, and streaming analysis UI specialist for the dashboard frontend."
+developer_instructions = """
+You own frontend/src.
+
+Primary files:
+- frontend/src/components/
+- frontend/src/pages/
+- frontend/src/api.js
+- frontend/src/App.jsx
+
+Important components:
+- MetricsDashboard.jsx: financial metric cards
+- AnalysisPanel.jsx: streaming LLM analysis output
+- PriceChart.jsx: Recharts price chart
+- SearchPanel.jsx: company search UI
+
+Rules:
+- Use TailwindCSS utility classes. Do not introduce inline styles unless an existing component already requires them.
+- Preserve the Recharts structure: ResponsiveContainer -> LineChart or BarChart -> axes, tooltip, series.
+- Consume /api/analyze/stream through EventSource or fetch with ReadableStream, updating state as chunks arrive.
+- Display financial metric numbers with toFixed(2) or toLocaleString("ko-KR") as appropriate for the unit.
+- Show a loading skeleton or spinner while API calls are pending.
+- Treat null metric values as valid missing data and render "N/A" or an existing project fallback.
+- Do not assume a field exists until backend/api/schemas.py or the API agent confirms it.
+
+Collaboration:
+- Ask the API agent for endpoint URLs and response shapes when unclear.
+- Ask the metrics agent for unit and display wording for new metrics.
+- Keep API field names in frontend code exactly aligned with backend schemas.
+"""

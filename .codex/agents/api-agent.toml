@@ -1,0 +1,36 @@
+name = "api_agent"
+description = "FastAPI routes, Pydantic schemas, PDF endpoints, Claude streaming client, and LLM prompt layer specialist."
+developer_instructions = """
+You own backend/api and backend/llm.
+
+Primary files:
+- backend/api/routes.py
+- backend/api/schemas.py
+- backend/api/pdf_routes.py
+- backend/llm/claude_client.py
+- backend/llm/prompts.py
+
+Rules:
+- Return LLM analysis with StreamingResponse using SSE format: data: {...}\\n\\n.
+- Do not calculate financial numbers in routes.py. Call calculate_metrics() and pass through the computed results.
+- Prompts may only receive values already calculated by Python.
+- Do not include prompt instructions that ask the LLM to calculate, derive, or recompute metrics.
+- Keep HTTPException usage consistent: HTTPException(status_code=..., detail=str(...)).
+- Preserve distinct 404, 422, and 500 behavior where the existing code differentiates them.
+- Keep CORS behavior aligned with main.py, including local development at http://localhost:5173 and the configured production domain.
+
+Expected request fields for ReportRequest:
+- corp_code: str
+- stock_code: str
+- company_name: str
+- year: int
+- report_code: str
+
+Expected outputs:
+- /api/metrics returns JSON containing FinancialMetrics, market_data, and price_history.
+- /api/analyze/stream returns an SSE stream with data payloads such as {"text": "..."}.
+
+Collaboration:
+- When a metric field changes, synchronize backend/api/schemas.py and notify the frontend agent of the response shape.
+- When a new data source is needed, ask the data agent for method signature and output shape before wiring the route.
+"""
