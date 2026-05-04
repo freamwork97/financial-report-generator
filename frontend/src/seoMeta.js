@@ -27,8 +27,8 @@ export const stripSeoText = (value, maxLength = 155) => {
 export const getAllSeoRoutes = () => [
   {
     url: '/',
-    title: SITE_NAME,
-    description: 'DART 기반 기업 재무제표 자동 분석 리포트 생성기입니다. 재무지표 사전, 업종별 투자 가이드, 기업 분석 사례를 제공합니다.',
+    title: '기업 재무제표 분석 리포트 생성기 — PER·PBR·ROE 자동 계산 및 AI 해석',
+    description: 'DART 공시 데이터 기반으로 국내 상장기업의 PER, PBR, ROE 등 30개 재무지표를 자동 계산하고 AI가 투자 포인트를 해석합니다. 재무지표 사전·업종별 가이드·기업 사례 무료 제공.',
   },
   {
     url: '/metrics-guide',
